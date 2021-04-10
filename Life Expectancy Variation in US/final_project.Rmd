@@ -1,0 +1,532 @@
+---
+title: "Final Project"
+author: "yashkuma, mabartak, shah12"
+output:
+  html_document: default
+---
+
+```{r setup, warning = F, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(broom)
+library(MASS)
+library(tidyverse)
+library(rio)
+library(viridis)
+library(mgcv)
+library(reshape)
+library(data.table)
+library(zoo)
+library(GGally)
+library(scales)
+library(NHANES)
+library(plotly)
+library(tidycensus)
+
+census_api_key("67d6a281e9018471ab2314a0ec7a907eb9fe19f7", install = TRUE, overwrite=TRUE)
+
+cb_palette = c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+```
+
+
+# Question 1
+
+### Creating data of US overall life expectancy since and within states life expectancy since 1980
+
+```{r}
+# Reading us and state wise life expectancy data
+
+data.us = read.csv('NCHS_-_Death_rates_and_life_expectancy_at_birth.csv', header = TRUE)
+```
+
+```{r}
+
+data.al = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_ALABAMA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.ak = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_ALASKA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.az = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_ARIZONA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.ar = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_ARKANSAS_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.ca = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_CALIFORNIA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.co = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_COLORADO_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.ct = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_CONNECTICUT_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.de = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_DELAWARE_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.dc = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_DISTRICT OF COLUMBIA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.fl = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_FLORIDA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.ga = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_GEORGIA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.hi = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_HAWAII_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.id = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_IDAHO_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.il = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_ILLINOIS_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.in = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_INDIANA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.ia = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_IOWA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.ks = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_KANSAS_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.ky = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_KENTUCKY_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.la = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_LOUISIANA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.me = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_MAINE_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.md = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_MARYLAND_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.ma = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_MASSACHUSETTS_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.mi = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_MICHIGAN_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.mn = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_MINNESOTA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.ms = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_MISSISSIPPI_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.mo = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_MISSOURI_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.mt = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_MONTANA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.ne = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_NEBRASKA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.nv = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_NEVADA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.nh = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_NEW HAMPSHIRE_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.nj = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_NEW JERSEY_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.nm = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_NEW MEXICO_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.ny = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_NEW YORK_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.nc = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_NORTH CAROLINA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.nd = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_NORTH DAKOTA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.oh = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_OHIO_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.ok = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_OKLAHOMA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.or = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_OREGON_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.pa = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_PENNSYLVANIA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.ri = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_RHODE ISLAND_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.sc = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_SOUTH CAROLINA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.sd = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_SOUTH DAKOTA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.tn = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_TENNESSEE_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.tx = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_TEXAS_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.ut = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_UTAH_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.vt = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_VERMONT_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.va = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_VIRGINIA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.wa = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_WASHINGTON_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.wv = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_WEST VIRGINIA_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.wi = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_WISCONSIN_Y2017M05D08.CSV', header = TRUE, nrow =105)
+data.wy = read.csv('IHME_USA_COUNTY_LE_MORTALITY_RISK_1980_2014_WYOMING_Y2017M05D08.CSV', header = TRUE, nrow =105)
+
+
+# row bind all states data
+data.states = rbind(data.al, data.ak, data.az, data.ar, data.ca, data.co, data.ct, data.de, data.dc, data.fl, data.ga, data.hi, data.id, data.il, data.in, data.ia, data.ks, data.ky, data.la, data.me, data.md, data.ma, data.mi, data.mn, data.ms, data.mo, data.mt, data.ne, data.nv, data.nh, data.nj, data.nm, data.ny, data.nc, data.nd, data.oh, data.ok, data.or, data.pa, data.ri, data.sc, data.sd, data.tn, data.tx, data.ut, data.vt, data.va, data.wa, data.wv, data.wi, data.wy)
+
+```
+
+
+
+
+### How life expectancy has changed in the US since 1980?
+
+```{r}
+
+# subset of columns of interest
+data.us1 = data.us[,c("Year","Race", "Sex", "Average.Life.Expectancy..Years.")]
+
+# analysis of us life expectancy since 1980
+subset.data.us = subset(data.us1, Year >= 1980)
+
+
+# aggregate on the basis of years and take mean of average life expectancy variation over different race and sexes
+agg.data.us = subset.data.us %>% group_by(Year) %>% summarise(Mean.Life.Expectancy=(mean(Average.Life.Expectancy..Years.)))
+
+# plot time series data 
+ggplot(agg.data.us,aes(x=Year,y=Mean.Life.Expectancy))+geom_line()+ xlab("Year") + ylab("Average Life Expectancy in US") + ggtitle("Variation in Life Expectancy in US since 1980 : Time series plot")
+
+
+```
+
+
+From the plot, we can observe that average life expectancy has been increasing since 1980. Also, it is clear from the plot that in 2010, the average life expectancy has been saturated and has remained approximately constant from 2010.  
+
+
+
+### How life expectancy has changed in different states since 1980?
+
+```{r}
+
+# subset of columns of interest
+data.states1 = data.states[,c("year_id","location_name","sex", "val")]
+
+# aggregate on the basis of years and take mean of average life expectancy variation over different race and sexes
+agg.data.states = data.states1 %>% group_by(year_id,location_name) %>% summarise(Mean.Life.Expectancy=(mean(val)))
+
+
+# map state with region
+state.region.map = data.frame(state.name,state.region)
+names(state.region.map) = c("location_name","region")
+
+state.region.map$region = as.character(state.region.map$region)
+state.region.map$region[state.region.map$region == "North Central"] = "Mid West"
+state.region.map$region = as.factor(state.region.map$region)
+
+data.region = merge(x = agg.data.states, y = state.region.map, by = "location_name")
+
+# subset states based on region
+west = subset(data.region, region == "West")
+south = subset(data.region, region == "South")
+northeast = subset(data.region, region == "Northeast")
+midwest = subset(data.region, region == "Mid West")
+
+# facet plot for analysis of average life expectancy changes over year for states in west region
+ggplot(west,aes(x=year_id,y=Mean.Life.Expectancy, group = location_name))+facet_wrap(~location_name, ncol = 4)+ geom_line() + ggtitle("Average Life Expectancy in different states of West region since 1980")
+
+# facet plot for analysis of average life expectancy changes over year for states in South region
+ggplot(south,aes(x=year_id,y=Mean.Life.Expectancy, group = location_name))+facet_wrap(~location_name, ncol = 4)+ geom_line()+ xlab("Year") + ylab("Average Life Expectancy") + ggtitle("Average Life Expectancy in different states of South region since 1980")
+
+# facet plot for analysis of average life expectancy changes over year for states in Northeast region
+ggplot(northeast,aes(x=year_id,y=Mean.Life.Expectancy, group = location_name))+facet_wrap(~location_name, ncol = 4)+ geom_line()+ xlab("Year") + ylab("Average Life Expectancy") + ggtitle("Average Life Expectancy in different states of Northeast region since 1980")
+
+# facet plot for analysis of average life expectancy changes over year for states in Midwest region
+ggplot(midwest,aes(x=year_id,y=Mean.Life.Expectancy, group = location_name))+facet_wrap(~location_name, ncol = 4)+ geom_line()+ xlab("Year") + ylab("Average Life Expectancy") + ggtitle("Average Life Expectancy in different states of Midwest region since 1980")
+
+
+
+```
+
+#### West Region
+The highest increase of average life expectancy in West region since 1980 is observed in California with average of approximately 82.5 in the current year. Also, Alaska, Wyoming, New Mexico and Nevada have lowest increase in average life expectancy since 1980 with 79 in the current year.
+
+#### South Region
+The highest increase of life expectancy in South region since 1980 is observed in Delaware, Florida, Maryland and Virginia with approximately 80 in the current year. We can also observe that state like Oklahoma has a flat curve varying from 73 - 76. The lowest average life expectancy in the current year is seen in  Mississippi. 
+
+#### Northeast Region
+All the states in Northeast region has pretty much same distribution with highest in Connecticut (approx. 81 in the current year)
+
+#### MidWest region
+The highest increase of average life expectancy in Midwest region since 1980 is observed in Minnesota with approximately 81 in the current year. Also, Ohio, Indiana and Missouri has lowest increase in life expectancy with 77.5 in the current year
+
+
+### How life expectancy has changed in different region since 1980?
+
+```{r}
+# aagregating state wise life expectancy to region wise
+
+agg.data.region = data.region %>% group_by(year_id,region) %>% summarise(Mean.Life.Expectancy.region=(mean(Mean.Life.Expectancy)))
+
+# facet plot for analysis of average life expectancy changes over year region wise
+ggplot(agg.data.region,aes(x=year_id,y=Mean.Life.Expectancy.region, group = region))+facet_wrap(~region)+ geom_line()+ xlab("Year") + ylab("Average Life Expectancy") + ggtitle("Average Life Expectancy in different region since 1980")
+
+```
+
+From the above plot, we can see that overall region wise, the highest increase in average life expectancy is for Northeast region followed by West region. South region has lowest increase in average life expectancy. This is consistent with the fact that Northeast and West region has a better standard of living with high income people living there. Hence, life expectancy rate will be high in those regions. 
+
+
+
+
+
+
+
+
+# Question 2
+
+### How life expectancy change for different genders over time?
+
+```{r}
+
+# Reading life expectancy data variation over years in different races and sex
+data = read.csv('life.csv')
+data.agg.gender = data %>% group_by(Year,Sex) %>% summarise(Mean.Life.Expectancy=(mean(Average.Life.Expectancy..Years.)))
+
+# subsetting data with only male and female gender
+data.agg.gender1 = subset(data.agg.gender, data.agg.gender$Sex != 'Both Sexes' )
+
+# Comparison of life expectancy variation of male and female over time (Time series)
+ggplot(data.agg.gender1, aes(x=Year,y=Mean.Life.Expectancy , col = Sex))+geom_line(alpha = 0.9)+ xlab("Year") + ylab("Average Life Expectancy") + ggtitle("Average Life Expectancy in among different genders : Time Series plot")
+
+```
+
+From the plot, we can observe that overall average life expectancy of male and female increasing over the years except there is a sudden dip in 1920 due to World War 1 (probably). Also, we can see saturation in average life expectancy for both male and female from 2000 and expecting to be uniformly distributed from 2000 to next subsequent years. Overall, the average life expectancy of female is greater than male at all years with highest margin at 1975.
+
+
+### How change in life expectancy for different genders over time?
+
+```{r}
+
+# Subsetting aggregated gender data into male and female
+
+data.agg.male = subset(data.agg.gender1, data.agg.gender1$Sex == 'Male')
+data.agg.female = subset(data.agg.gender1, data.agg.gender1$Sex == 'Female')
+
+# changing column names of Mean.Life.Expectancy
+names(data.agg.male) = c("Year","Sex","Mean.Life.Expectancy.male")
+names(data.agg.female) = c("Year","Sex","Mean.Life.Expectancy.female")
+
+# Merge both male and female aggregated data based on Year to calculate difference
+merge.data.agg.gender = merge(x = data.agg.female, y = data.agg.male, by = "Year" )
+merge.data.agg.gender$Mean.Life.Expectancy.Diff = merge.data.agg.gender$Mean.Life.Expectancy.female - merge.data.agg.gender$Mean.Life.Expectancy.male 
+
+
+# Difference in life expectancy of female and male over time (Time series model)
+ggplot(merge.data.agg.gender, aes(x=Year,y=Mean.Life.Expectancy.Diff ))+geom_line()+ xlab("Year") + ylab("Difference in Average Life Expectancy") + ggtitle("Difference in Life Expectancy in among female and male : Time series plot")
+
+
+
+```
+
+The above plot shows difference between average life expectancy of female and male over years. The highest difference can be seen at 1975. The difference has decreased after 1975.
+
+
+### How life expectancy change for different races over time?
+
+```{r}
+
+# Aggregating data on the basis of year and race
+data.agg.race = data %>% group_by(Year,Race) %>% summarise(Mean.Life.Expectancy=(mean(Average.Life.Expectancy..Years.)))
+
+# subsetting data with only black and white races
+data.agg.race1 = subset(data.agg.race, data.agg.race$Race != 'All Races')
+
+# Comparison of life expectancy variation of blacks and white over time (Time series)
+ggplot(data.agg.race1, aes(x=Year,y=Mean.Life.Expectancy , col = Race))+geom_line(alpha = 0.9)+ xlab("Year") + ylab("Average Life Expectancy") + ggtitle("Average Life Expectancy in among different races : Time Series plot")
+
+```
+
+From the plot, we can observe that overall average life expectancy of whites and blacks increasing over the years. Also, we can see saturation in average life expectancy for whites from 2000. The difference between average life expectancy of whites and blacks have also reduced over years. Overall, the average life expectancy of whites is greater than male at all years with highest margin at 1900.
+
+
+
+### How change in life expectancy for different races over time?
+
+```{r}
+
+# Subsetting aggregated race data into black and white
+
+data.agg.white = subset(data.agg.race1, data.agg.race1$Race == 'White')
+data.agg.black = subset(data.agg.race1, data.agg.race1$Race == 'Black')
+
+# changing column names of Mean.Life.Expectancy
+names(data.agg.white) = c("Year","Race","Mean.Life.Expectancy.white")
+names(data.agg.black) = c("Year","Race","Mean.Life.Expectancy.black")
+
+# Merge both white and black aggregated data based on Year to calculate difference
+merge.data.agg.race = merge(x = data.agg.white, y = data.agg.black, by = "Year" )
+merge.data.agg.race$Mean.Life.Expectancy.Diff = merge.data.agg.race$Mean.Life.Expectancy.white - merge.data.agg.race$Mean.Life.Expectancy.black 
+
+# Difference in life expectancy of female and male over time (Time series model)
+ggplot(merge.data.agg.race, aes(x=Year,y=Mean.Life.Expectancy.Diff ))+geom_line()+ xlab("Year") + ylab("Difference in Average Life Expectancy") + ggtitle("Difference in Life Expectancy in among whites and blacks : Time series plot")
+
+
+
+```
+
+The above plot shows difference between average life expectancy of whites and blacks over years. The highest difference can be seen at 1900. The difference has been constantly decreasing over the years. 
+
+# Question 3
+
+### Does the life expectancy vary with the population density?
+
+```{r}
+state_area <- read.delim("state-areas.txt", sep = ",", header = TRUE)
+state_area <- subset(state_area , state_area$location_name != "District of Columbia" )
+state_area <- subset(state_area , state_area$location_name != "Puerto Rico" )
+
+
+# map state with region
+state.region.map = data.frame(state.name,state.region, state_area)
+names(state.region.map) = c("location_name","region","state" ,"area")
+
+state.region.map$region = as.character(state.region.map$region)
+state.region.map$region[state.region.map$region == "North Central"] = "Mid West"
+state.region.map$region = as.factor(state.region.map$region)
+
+data.region = merge(x = data.states1, y = state.region.map, by = "location_name")
+
+# subset states based on region
+west = subset(data.region, region == "West")
+south = subset(data.region, region == "South")
+northeast = subset(data.region, region == "Northeast")
+midwest = subset(data.region, region == "Mid West")
+```
+
+```{r}
+population.1990 = get_decennial(geography = "state", variables = "P0010001", year = 1990)
+population.2000 = get_decennial(geography = "state", variables = "P001001", year = 2000)
+population.2010 = get_decennial(geography = "state", variables = "P001001", year = 2010)
+```
+
+
+```{r}
+west1990 = subset(west, west$year_id == 1990 & west$sex == "Both")
+south1990 =  subset(south, south$year_id == 1990 & south$sex == "Both")
+northeast1990 =  subset(northeast, northeast$year_id == 1990 & northeast$sex == "Both")
+midwest1990 =  subset(midwest, midwest$year_id == 1990 & midwest$sex == "Both")
+
+combine1 = rbind(west1990,south1990)
+combine2 = rbind(combine1,northeast1990)
+combine3 = rbind(combine2, midwest1990)
+
+state1990 = subset(population.1990, population.1990$NAME != "District of Columbia")
+setnames(state1990, "NAME", "location_name")
+merge1 = merge(state1990, combine3, by = "location_name")
+merge1<-merge1 %>% mutate(density= log(merge1$value/merge1$area))
+
+ggplot(merge1, aes(x = merge1$density, y = merge1$val)) + geom_point(size = 0.7, alpha = 0.7) +
+geom_smooth(se= F, method = "lm", method.args = list(degree = 1)) +
+facet_wrap(~ region) + labs(title = "Population density vs Life Expectency for 1990" , subtitle = "For both sexes" )+
+ylab("Life Expectency (in years)") + xlab("Population density in 1990 (log scale)")+
+theme(axis.text=element_text(size=10),
+plot.title = element_text(color="black", size=12, face="bold"),
+axis.title=element_text(size=10))
+
+ggplot(merge1, aes(x=merge1$density, y=merge1$val, color = region)) + facet_wrap(~ region)+ geom_line(alpha = 0.9, size=1) + labs(title = "Population density vs Life Expectency for 1990" , subtitle = "For both sexes" )+
+ylab("Life Expectency (in years)") + xlab("Population density in 1990 (log scale)")+
+theme(axis.text=element_text(size=10),
+plot.title = element_text(color="black", size=12, face="bold"),
+axis.title=element_text(size=10))
+
+```
+
+Every region is showing some kind of pattern, such as,  
+
+**Mid West**
+In this region, more densely populated states have less life expectancy rate. While lesser populated states have more life expectancy.
+
+**Northeast** 
+In this region, less populated states as well as highly populated states have high life expectancy witha dip in life expectancy for moderately populated states.
+
+**South**
+In the south region, densely populated states have more life expectancy than less densely populated states.
+
+**West**
+We can see a linear trend in this region. Less populated states have less life expectncy while highly populated states have more life expectancy.
+
+```{r}
+west2000 = subset(west, west$year_id == 2000 & west$sex == "Both")
+south2000 =  subset(south, south$year_id == 2000 & south$sex == "Both")
+northeast2000 =  subset(northeast, northeast$year_id == 2000 & northeast$sex == "Both")
+midwest2000 =  subset(midwest, midwest$year_id == 2000 & midwest$sex == "Both")
+
+combine4 = rbind(west2000,south2000)
+combine5 = rbind(combine4,northeast2000)
+combine6 = rbind(combine5, midwest2000)
+
+state2000 = subset(population.2000, population.2000$NAME != "District of Columbia")
+setnames(state2000, "NAME", "location_name")
+merge2 = merge(state2000, combine6, by = "location_name")
+merge2<-merge2 %>% mutate(density= log(merge2$value/merge2$area))
+
+
+ggplot(merge2, aes(x = merge2$density, y = merge2$val)) + geom_point(size = 0.7, alpha = 0.7) +
+geom_smooth(se= F, method = "lm", method.args = list(degree = 1)) +
+facet_wrap(~ region) + labs(title = "Population density vs Life Expectency for 2000" , subtitle = "For both sexes" )+
+ylab("Life Expectency (in years)") + xlab("Population density in 2000 (log scale)")+
+theme(axis.text=element_text(size=10),
+plot.title = element_text(color="black", size=12, face="bold"),
+axis.title=element_text(size=10))
+
+ggplot(merge2, aes(x=merge2$density, y=merge2$val, color = region)) + facet_wrap(~ region)+ geom_line(alpha = 0.9, size=1) + labs(title = "Population density vs Life Expectency for 2000" , subtitle = "For both sexes" )+
+ylab("Life Expectency (in years)") + xlab("Population density in 2000 (log scale)")+
+theme(axis.text=element_text(size=10),
+plot.title = element_text(color="black", size=12, face="bold"),
+axis.title=element_text(size=10))
+
+```
+Every region is showing some kind of pattern, such as,  
+
+**Mid West**
+In this region, we can observe a downward trend. Less populated states have more life expectancy while more populated states have less life expectancy.
+
+**Northeast** 
+We see a same trend almost for all states in this region. 
+
+**South**
+In this region, we see a linear trend. Less populated states have less life expectancy while more populated states have more life expectancy.
+
+**West**
+We can see a linear trend in this region as well. Less populated states have less life expectncy while highly populated states have more life expectancy.
+
+```{r}
+west2010 = subset(west, west$year_id == 2010 & west$sex == "Both")
+south2010 =  subset(south, south$year_id == 2010 & south$sex == "Both")
+northeast2010 =  subset(northeast, northeast$year_id == 2010 & northeast$sex == "Both")
+midwest2010 =  subset(midwest, midwest$year_id == 2010 & midwest$sex == "Both")
+
+combine7 = rbind(west2010,south2010)
+combine8 = rbind(combine7,northeast2010)
+combine9 = rbind(combine8, midwest2010)
+
+state2010 = subset(population.2010, population.2010$NAME != "District of Columbia")
+setnames(state2010, "NAME", "location_name")
+merge3 = merge(state2010, combine9, by = "location_name")
+merge3<-merge3 %>% mutate(density= log(merge3$value/merge3$area))
+
+ggplot(merge3, aes(x = merge3$density, y = merge3$val)) + geom_point(size = 0.7, alpha = 0.7) +
+geom_smooth(se= F, method = "lm", method.args = list(degree = 1)) +
+facet_wrap(~ region) + labs(title = "Population density vs Life Expectency for 2010" , subtitle = "For both sexes" )+
+ylab("Life Expectency (in years)") + xlab("Population density in 2010 (log scale)")+
+theme(axis.text=element_text(size=10),
+plot.title = element_text(color="black", size=12, face="bold"),
+axis.title=element_text(size=10))
+
+ggplot(merge3, aes(x=merge3$density, y=merge3$val, color = region)) + facet_wrap(~ region)+ geom_line(alpha = 0.9, size=1) + labs(title = "Population density vs Life Expectency for 2010" , subtitle = "For both sexes" )+
+ylab("Life Expectency (in years)") + xlab("Population density in 2010 (log scale)")+
+theme(axis.text=element_text(size=10),
+plot.title = element_text(color="black", size=12, face="bold"),
+axis.title=element_text(size=10))
+```
+In 2010, every region is showing some kind of pattern similar to that in 2000, such as,  
+
+**Mid West**
+In this region, we can observe a downward trend. Less populated states have more life expectancy while more populated states have less life expectancy.
+
+**Northeast** 
+We see a same trend almost for all states in this region. 
+
+**South**
+In this region, we see a linear trend. Less populated states have less life expectancy while more populated states have more life expectancy.
+
+**West**
+We can see a linear trend in this region as well. Less populated states have less life expectncy while highly populated states have more life expectancy.
+
+### Life expectancy vs population density (by race)
+
+```{r}
+life_expectancy = read.csv('life_expectancy_race.csv', header = TRUE)
+life_expectancy$State <- tolower(life_expectancy$State)
+setnames(life_expectancy, "State", "location_name")
+```
+
+```{r}
+life_expectancy_1990 = subset(life_expectancy, life_expectancy$Year == 1990)
+merge1$location_name = tolower(merge1$location_name)
+
+merge4 = merge(life_expectancy_1990, merge1, by = "location_name")
+merge4<-merge4 %>% mutate(black_fe = (merge4$Black.male.life.expectancy..years. + merge4$Black.female.life.expectancy..years.)/2)
+merge4<-merge4 %>% mutate(white_fe = (merge4$White.male.life.expectancy..years. + merge4$White.female.life.expectancy..years.)/2)
+
+merge5 = merge4[,c("location_name","black_fe","white_fe","density", "region")]
+
+ggplot(merge5, aes(x = merge5$density, y = merge5$black_fe)) + geom_point(size = 0.7, alpha = 0.7) +
+geom_smooth(se= F, method = "lm") + facet_wrap(~ region) + labs(title = "Population density vs Black Race Life Expectency for 1990" , subtitle = "For both sexes in Black race" )+ ylab("Life Expectency for Black Race (in years)") + xlab("Population density in 1990 (log scale)")+ theme(axis.text=element_text(size=10),plot.title = element_text(color="black", size=12, face="bold"), axis.title=element_text(size=10))
+
+ggplot(merge5, aes(x = merge5$density, y = merge5$white_fe)) + geom_point(size = 0.7, alpha = 0.7) +
+geom_smooth(se= F, method = "lm") + facet_wrap(~ region) + labs(title = "Population density vs White Race Life Expectency for 1990" , subtitle = "For both sexes in White race" )+ ylab("Life Expectency for White Race (in years)") + xlab("Population density in 1990 (log scale)")+ theme(axis.text=element_text(size=10),plot.title = element_text(color="black", size=12, face="bold"), axis.title=element_text(size=10))
+```
+**Mid West**
+In this region, the blacks and whites have similar trend. States with low population have high expectancy. It decreases with increase in population.
+
+**Northeast** 
+In this region, the blacks have an increasing trend. States with lower population have low life expectancy and the states with high population have higher life expectancy. No trend is seen in the life expectancy of the whites in this region.
+
+**South**
+In this region, the blacks have same trend throughout while the whites have an increasing trend. The states with less population density have lesser life expectancy rate than the states with more population.
+
+**West**
+The trend for blacks and whites is the same in this region. Less populated states have less life expectancy, while the life expectancy increases as the population density increases. 
+
+```{r}
+life_expectancy_2000 = subset(life_expectancy, life_expectancy$Year == 2000)
+merge2$location_name = tolower(merge2$location_name)
+
+merge6 = merge(life_expectancy_2000, merge2, by = "location_name")
+merge6<-merge6 %>% mutate(black_fe = (merge6$Black.male.life.expectancy..years. + merge6$Black.female.life.expectancy..years.)/2)
+merge6<-merge6 %>% mutate(white_fe = (merge6$White.male.life.expectancy..years. + merge6$White.female.life.expectancy..years.)/2)
+
+merge7 = merge6[,c("location_name","black_fe","white_fe","density", "region")]
+
+ggplot(merge7, aes(x = merge7$density, y = merge7$black_fe)) + geom_point(size = 0.7, alpha = 0.7) +
+geom_smooth(se= F, method = "lm") + facet_wrap(~ region) + labs(title = "Population density vs Black Race Life Expectency for 2000" , subtitle = "For both sexes in Black race" )+ ylab("Life Expectency for Black Race (in years)") + xlab("Population density in 2000 (log scale)")+ theme(axis.text=element_text(size=10),plot.title = element_text(color="black", size=12, face="bold"), axis.title=element_text(size=10))
+
+ggplot(merge7, aes(x = merge7$density, y = merge7$white_fe)) + geom_point(size = 0.7, alpha = 0.7) +
+geom_smooth(se= F, method = "lm") + facet_wrap(~ region) + labs(title = "Population density vs White Race Life Expectency for 2000" , subtitle = "For both sexes in White race" )+ ylab("Life Expectency for White Race (in years)") + xlab("Population density in 2000 (log scale)")+ theme(axis.text=element_text(size=10),plot.title = element_text(color="black", size=12, face="bold"), axis.title=element_text(size=10))
+```
+**Mid West**
+The whites in this region shows sharp decline in life expectancy as the population density increases. For the blacks, theres no trend as such. 
+
+**Northeast** 
+In this region, the blacks have an increasing trend like in the year 1990. While the whites show slight increase in the trend. 
+
+**South**
+The blacks and the whites in this region shows an increasing trend. Less populated states have less life expectancy. Life expectancy increases with increase in population.
+
+**West**
+In this region, life expectancy for black decreases as population density increases. While for whites its the opposite.
+
+
